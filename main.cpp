@@ -5,7 +5,7 @@ struct chip8 {
     uint8_t registers [16]; //holds a value temporarily(sticky notes) as hex 0toF
     uint16_t indexRegister; //points inside memory using an address
     uint16_t programCounter; //holds the address of the next instruction
-    uint16_t stack [16]; //to remember current task
+    uint16_t stack [16]; //to remember where to go back after a subtask
     uint8_t display [64*32]; //display with 2048 pixels
     uint8_t keypad [16]; //16 keys, either 1 or 0 (pressed or not)
     uint8_t delayTimer; //used for pacing
@@ -15,7 +15,15 @@ struct chip8 {
 int main(){
     chip8 mychip8 = {};
     mychip8.programCounter = 0x200;
-    
+    uint16_t opcode = (mychip8.memory [mychip8.programCounter << 8]) | (mychip8.memory [mychip8.programCounter + 1]);
+
+    switch(opcode & 0xF000){
+        case 0x0000 : {if (opcode == 0x00E0){for (int i=0; i<2048; ++i){mychip8.display[i] = 0;}}; break;}
+        case 0x1000 : {mychip8.programCounter = opcode & 0x0FFF; break;}
+        case 0x6000 : {uint8_t x = (opcode & 0x0F00) >> 8; uint8_t nn = opcode & 0x00FF; mychip8.registers[x] = nn; break;}
+        case 0x7000 : {uint8_t x = (opcode & 0x0F00) >> 8; uint8_t nn = opcode & 0x00FF; mychip8.registers[x] += nn; break;}
+        case 0xA000 : {mychip8.indexRegister = opcode & 0x0FFF; break;}
+    }
 
 
 
