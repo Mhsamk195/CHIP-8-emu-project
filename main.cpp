@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <SDL2/SDL.h>
 
 struct chip8 {
     uint8_t memory [4096]; //RAM
@@ -23,6 +24,18 @@ int main(){
         case 0x6000 : {uint8_t x = (opcode & 0x0F00) >> 8; uint8_t nn = opcode & 0x00FF; mychip8.registers[x] = nn; break;}
         case 0x7000 : {uint8_t x = (opcode & 0x0F00) >> 8; uint8_t nn = opcode & 0x00FF; mychip8.registers[x] += nn; break;}
         case 0xA000 : {mychip8.indexRegister = opcode & 0x0FFF; break;}
+        case 0xD000 : {uint8_t x = (opcode & 0x0F00) >> 8; x = x % 64;
+                       uint8_t y = (opcode & 0x00F0) >> 4; y = y % 32;
+                       uint8_t n = (opcode & 0x000F); mychip8.registers[0xF] = 0;
+                       for (int row=0; row<n; ++row) { uint8_t spritebyte = mychip8.memory[mychip8.indexRegister + row];
+                        for (int col=0; col<8; ++col){ uint8_t pixel = (spritebyte >> (7 - col)) & 1;
+                        if (pixel == 1){int index = (y + row) * 64 + (x + col);
+                            if (mychip8.display[index] == 1){
+                                mychip8.registers[0xF] = 1;
+                            }   mychip8.display[index] ^= 1;
+                        }}
+                       }
+        }
     }
 
 
