@@ -13,8 +13,23 @@ struct chip8 {
     uint8_t soundTimer; //beeps if above 0
 };
 
-int main(){
-    chip8 mychip8 = {};
+int main(){    chip8 mychip8 = {};
+    const int SCALE = 10;
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Window* window = SDL_CreateWindow ("mhsamk emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 320, 0);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+    mychip8.display[0] = 1;
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    for(int i=0; i<2048; ++i){
+        if(mychip8.display[i] == 1){
+            int col = i % 64;
+            int row = i / 64;
+            SDL_Rect pixelRect = { col * SCALE, row * SCALE, SCALE, SCALE };
+            SDL_RenderFillRect(renderer, &pixelRect);
+        }
+    }
+    SDL_RenderPresent(renderer);
     mychip8.programCounter = 0x200;
     uint16_t opcode = (mychip8.memory [mychip8.programCounter << 8]) | (mychip8.memory [mychip8.programCounter + 1]);
 
@@ -33,12 +48,11 @@ int main(){
                             if (mychip8.display[index] == 1){
                                 mychip8.registers[0xF] = 1;
                             }   mychip8.display[index] ^= 1;
-                        }}
-                       }
-        }
+                        }}}}
+
     }
 
 
-
+SDL_Delay(3000);
 return 0;    
 }
