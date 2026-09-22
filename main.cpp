@@ -14,6 +14,7 @@ struct chip8 {
 };
 
 int main(){    chip8 mychip8 = {};
+  //////////////////////////////////////////////////////////
     const int SCALE = 10;
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window* window = SDL_CreateWindow ("mhsamk emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 320, 0);
@@ -30,9 +31,13 @@ int main(){    chip8 mychip8 = {};
         }
     }
     SDL_RenderPresent(renderer);
+  ///////////////////////////////////////////////////////
+ //starting point
     mychip8.programCounter = 0x200;
-    uint16_t opcode = (mychip8.memory [mychip8.programCounter << 8]) | (mychip8.memory [mychip8.programCounter + 1]);
-
+ //fetch
+    uint16_t opcode = (mychip8.memory [mychip8.programCounter << 8]) | mychip8.memory [mychip8.programCounter + 1];
+    mychip8.programCounter += 2; //next instruction
+ //decode+excute
     switch(opcode & 0xF000){
         case 0x0000 : {if (opcode == 0x00E0){for (int i=0; i<2048; ++i){mychip8.display[i] = 0;}}; break;}
         case 0x1000 : {mychip8.programCounter = opcode & 0x0FFF; break;}
