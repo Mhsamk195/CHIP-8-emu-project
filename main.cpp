@@ -58,7 +58,13 @@ int main(){    chip8 emu = {};
     emu.PC += 2; //next instruction
  //decode+excute
     switch(opcode & 0xF000){
-        case 0x0000 : {if (opcode == 0x00E0){for (int i=0; i<2048; ++i){emu.display[i] = 0;}}; break;}
+        case 0x0000 : {if (opcode == 0x00E0){for (int i=0; i<2048; ++i){emu.display[i] = 0;}}
+                       else if(opcode==0x00EE){
+                        if(emu.SP>0){
+                            emu.SP--;
+                            emu.PC=emu.stack[emu.SP];
+                        }
+                       } break;}
         case 0x1000 : {emu.PC = opcode & 0x0FFF; break;}
         case 0x6000 : {uint8_t x = (opcode & 0x0F00) >> 8; uint8_t nn = opcode & 0x00FF; emu.registers[x] = nn; break;}
         case 0x7000 : {uint8_t x = (opcode & 0x0F00) >> 8; uint8_t nn = opcode & 0x00FF; emu.registers[x] += nn; break;}
@@ -78,6 +84,8 @@ int main(){    chip8 emu = {};
                                 emu.registers[0xF] = 1;
                             }   emu.display[index] ^= 1;
                         }}} break;}
+        case 0x2000 : {if(emu.SP<16){emu.stack[emu.SP]=emu.PC; emu.SP++; emu.PC= opcode & 0x0fff;} break;}
+        
         default : std::cout << "Unknown opcode: 0x"
               << std::hex << opcode << '\n'; break;
             } 
@@ -95,7 +103,7 @@ int main(){    chip8 emu = {};
             }
         }
         SDL_RenderPresent(renderer);
-    
+    SDL_Delay(2);
 } //loop ends here
 SDL_DestroyRenderer(renderer);
 SDL_DestroyWindow(window);
