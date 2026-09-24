@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <SDL3/SDL.h>
 
 struct chip8 {
     uint8_t memory [4096]; //RAM
@@ -28,6 +29,19 @@ bool loadrom(chip8& emu,const std::string& filename){
         return true;}
 
 int main(){    chip8 emu = {};
+    if(!SDL_Init(SDL_INIT_VIDEO)) {
+        std::cerr<<"error:"
+                 <<SDL_GetError()<<'\n';
+        return 1;}
+
+    SDL_Window* window=SDL_CreateWindow("mhsamk emulator",640,320,0);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window,nullptr);
+    if (window == nullptr || renderer == nullptr) {
+        std::cerr<<"error:"
+                 <<SDL_GetError()<<'\n';
+                 SDL_Quit();
+                 return 1;
+    }
 
     emu.PC = 0x200;  //starting point
     emu.SP = 0;
@@ -36,6 +50,9 @@ int main(){    chip8 emu = {};
 
     bool running = true;
     while (running) {  //loop starts here
+    SDL_Event event;
+    while(SDL_PollEvent(&event)){
+        if(event.type==SDL_EVENT_QUIT){running=false;}}
  //fetch
     uint16_t opcode = (emu.memory [emu.PC] << 8) | emu.memory [emu.PC + 1];
     emu.PC += 2; //next instruction
@@ -46,8 +63,10 @@ int main(){    chip8 emu = {};
         case 0x6000 : {uint8_t x = (opcode & 0x0F00) >> 8; uint8_t nn = opcode & 0x00FF; emu.registers[x] = nn; break;}
         case 0x7000 : {uint8_t x = (opcode & 0x0F00) >> 8; uint8_t nn = opcode & 0x00FF; emu.registers[x] += nn; break;}
         case 0xA000 : {emu.indexRegister = opcode & 0x0FFF; break;}
-        case 0xD000 : {uint8_t x = (opcode & 0x0F00) >> 8;
-                       uint8_t y = (opcode & 0x00F0) >> 4;
+        case 0xD000 : {uint8_t xRegister = (opcode & 0x0F00) >> 8;
+                       uint8_t yRegister = (opcode & 0x00F0) >> 4;
+                       uint8_t x = emu.registers[xRegister];
+                       uint8_t y = emu.registers[yRegister];
                        uint8_t n = (opcode & 0x000F); emu.registers[0xF] = 0;
                        for (int row=0; row<n; ++row) { uint8_t spritebyte = emu.memory[emu.indexRegister + row];
                         for (int col=0; col<8; ++col){ uint8_t pixel = (spritebyte >> (7 - col)) & 1;
@@ -62,7 +81,24 @@ int main(){    chip8 emu = {};
         default : std::cout << "Unknown opcode: 0x"
               << std::hex << opcode << '\n'; break;
             } 
+    SDL_SetRenderDrawColor(renderer,0,0,0,255);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer,255,255,255,255);
+    for(int y=0; y<32; ++y){
+        for(int x=0; x<64; ++x){
+            int index=y*64+x;
+            if(emu.display[index] != 0){
+                SDL_FRect pixel={
+                    static_cast<float>(x*10),static_cast<float>(y*10),10.0f,10.0f};
+                SDL_RenderFillRect(renderer,&pixel);
+                }
+            }
+        }
+        SDL_RenderPresent(renderer);
+    
 } //loop ends here
-
+SDL_DestroyRenderer(renderer);
+SDL_DestroyWindow(window);
+SDL_Quit();
 return 0;    
 }
