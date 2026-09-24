@@ -1,6 +1,5 @@
 #include <cstdint>
 #include <iostream>
-#include <SDL2/SDL.h>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -17,33 +16,26 @@ struct chip8 {
     uint8_t DT; //used for pacing
     uint8_t ST; //beeps if above 0
 };
-bool loadrom(chip8& emu,const std::& filename) {
-    
-}
+
+bool loadrom(chip8& emu,const std::string& filename){
+    std::ifstream file(filename,std::ios::binary);
+    if(!file){
+        std::cerr<<"ERROR:ROM could not be loaded : "<<filename<<'\n'; return false;}
+    file.read(reinterpret_cast<char*>(&emu.memory[0x200]),sizeof(emu.memory)-0x200);
+    if(file.bad()){
+        std::cerr<<"error occored while reading the ROM\n";
+        return false;}
+        return true;}
 
 int main(){    chip8 emu = {};
-  //////////////////////////////////////////////////////////
-    const int SCALE = 10;
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_Window* window = SDL_CreateWindow ("mhsamk emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 320, 0);
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
-    emu.display[0] = 1;
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
-    for(int i=0; i<2048; ++i){
-        if(emu.display[i] == 1){
-            int col = i % 64;
-            int row = i / 64;
-            SDL_Rect pixelRect = { col * SCALE, row * SCALE, SCALE, SCALE };
-            SDL_RenderFillRect(renderer, &pixelRect);
-        }
-    }
-    SDL_RenderPresent(renderer);
-  //////////////////////////////////////////////////////////
+
     emu.PC = 0x200;  //starting point
     emu.SP = 0;
+
+    if(!loadrom(emu,"rom.ch8")){return 1;}
+
     bool running = true;
-    while (running = true) {  //loop starts here
+    while (running) {  //loop starts here
  //fetch
     uint16_t opcode = (emu.memory [emu.PC] << 8) | emu.memory [emu.PC + 1];
     emu.PC += 2; //next instruction
@@ -66,13 +58,11 @@ int main(){    chip8 emu = {};
                             if (emu.display[index] == 1){
                                 emu.registers[0xF] = 1;
                             }   emu.display[index] ^= 1;
-                        }}}}
+                        }}} break;}
         default : std::cout << "Unknown opcode: 0x"
               << std::hex << opcode << '\n'; break;
             } 
 } //loop ends here
 
-
-SDL_Delay(3000);
 return 0;    
 }
