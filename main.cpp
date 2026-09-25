@@ -85,9 +85,10 @@ int main(){    chip8 emu = {};
                             }   emu.display[index] ^= 1;
                         }}} break;}
         case 0x2000 : {if(emu.SP<16){emu.stack[emu.SP]=emu.PC; emu.SP++; emu.PC= opcode & 0x0fff;} break;}
-        
-        default : std::cout << "Unknown opcode: 0x"
-              << std::hex << opcode << '\n'; break;
+        case 0x3000 : {uint8_t x = (opcode&0x0F00)>>8; uint8_t v = opcode&0x00FF; if(emu.registers[x]==v){emu.PC+=2;} break;}
+        case 0x4000 : {uint8_t x = (opcode&0x0F00)>>8; uint8_t v = opcode&0x00FF; if(emu.registers[x]!=v){emu.PC+=2;} break;}
+        case 0x5000 : {if((opcode&0x000F)==0x0000){ uint8_t x = (opcode&0x0F00)>>8; uint8_t y = (opcode&0x00F0)>>4; if(emu.registers[x]==emu.registers[y]){emu.PC+=2;}} break;}
+        default : {std::cout << "Unknown opcode: 0x"<< std::hex << opcode << '\n'; break;}
             } 
     SDL_SetRenderDrawColor(renderer,0,0,0,255);
     SDL_RenderClear(renderer);
