@@ -88,6 +88,24 @@ int main(){    chip8 emu = {};
         case 0x3000 : {uint8_t x = (opcode&0x0F00)>>8; uint8_t v = opcode&0x00FF; if(emu.registers[x]==v){emu.PC+=2;} break;}
         case 0x4000 : {uint8_t x = (opcode&0x0F00)>>8; uint8_t v = opcode&0x00FF; if(emu.registers[x]!=v){emu.PC+=2;} break;}
         case 0x5000 : {if((opcode&0x000F)==0x0000){ uint8_t x = (opcode&0x0F00)>>8; uint8_t y = (opcode&0x00F0)>>4; if(emu.registers[x]==emu.registers[y]){emu.PC+=2;}} break;}
+        case 0x8000 : {uint8_t x = (opcode & 0x0F00) >> 8; uint8_t y = (opcode&0x00F0)>>4; uint8_t type = opcode&0x000F;
+                        switch(type){
+                            case 0x0 : {emu.registers[x]=emu.registers[y]; break;}
+                            case 0x1 : {emu.registers[x]|=emu.registers[y]; break;}
+                            case 0x2 : {emu.registers[x]&=emu.registers[y]; break;}
+                            case 0x3 : {emu.registers[x]^=emu.registers[y]; break;}
+                            case 0x4 : {uint16_t sum = emu.registers[x] + emu.registers[y];
+                                         emu.registers[0xF] = (sum > 0xFF) ? 1 : 0;
+                                         emu.registers[x] = static_cast<uint8_t>(sum);}
+                            case 0x5 : {emu.registers[0xF] = (emu.registers[x] >= emu.registers[y]) ? 1 : 0;
+                                        emu.registers[x]=emu.registers[x]-emu.registers[y]; break;}
+                            case 0x6 : {emu.registers[0xF]=emu.registers[x]&1; emu.registers[x]>>=1; break;}
+                            case 0x7 : {emu.registers[0xF] = (emu.registers[y] >= emu.registers[x]) ? 1 : 0;
+                                        emu.registers[x]=emu.registers[y]-emu.registers[x]; break;}
+                            case 0xE : {emu.registers[0xF]=(emu.registers[x]>>7)&1;
+                                        emu.registers[x]<<=1; break;}
+                            default : {break;} break;
+                        }}
         default : {std::cout << "Unknown opcode: 0x"<< std::hex << opcode << '\n'; break;}
             } 
     SDL_SetRenderDrawColor(renderer,0,0,0,255);
